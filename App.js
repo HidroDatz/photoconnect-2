@@ -1,12 +1,19 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { AuthProvider } from './src/context/AuthContext';
+import { NotificationProvider } from './src/context/NotificationContext';
+import RootNavigator from './src/navigation/RootNavigator';
+import Toast from 'react-native-toast-message';
+import { View, StyleSheet } from 'react-native';
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <AuthProvider>
+        <NotificationProvider>
+          <RootNavigator />
+          <Toast />
+        </NotificationProvider>
+      </AuthProvider>
     </View>
   );
 }
@@ -14,8 +21,5 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
