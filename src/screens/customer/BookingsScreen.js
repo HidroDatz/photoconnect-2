@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { getBookingsForUser } from '../../services/bookingService';
+import { getUserProfile } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
@@ -10,12 +11,23 @@ const BookingsScreen = () => {
   const { user } = useAuth();
   const navigation = useNavigation();
   const [bookings, setBookings] = useState([]);
+  const [photographers, setPhotographers] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      const unsubscribe = getBookingsForUser(user.uid, (data) => {
+      const unsubscribe = getBookingsForUser(user.uid, async (data) => {
         setBookings(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+
+        const photographerIds = [...new Set(data.map(b => b.photographerId))];
+        const profiles = {};
+        for (const id of photographerIds) {
+          const doc = await getUserProfile(id);
+          if (doc.exists()) {
+            profiles[id] = doc.data();
+          }
+        }
+        setPhotographers(profiles);
         setLoading(false);
       });
       return () => unsubscribe();
@@ -38,18 +50,22 @@ const BookingsScreen = () => {
     }
   };
 
-  const renderBooking = ({ item }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('Booking', { bookingId: item.id })}>
-      <Card style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.photographerName}>{item.photographerName}</Text>
-          <Text style={getStatusStyle(item.status)}>{item.status.toUpperCase()}</Text>
-        </View>
-        <Text style={styles.serviceName}>{item.service?.name || 'No service selected'}</Text>
-        <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
-      </Card>
-    </TouchableOpacity>
-  );
+  const renderBooking = ({ item }) => {
+    const photographer = photographers[item.photographerId];
+    return (
+      <TouchableOpacity onPress={() => navigation.navigate('Booking', { bookingId: item.id })}>
+        <Card style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.photographerName}>{item.photographerName}</Text>
+            <Text style={getStatusStyle(item.status)}>{item.status.toUpperCase()}</Text>
+          </View>
+          <Text style={styles.serviceName}>{item.service?.name || 'No service selected'}</Text>
+          {photographer && <Text style={styles.phoneNumber}>{photographer.phoneNumber}</Text>}
+          <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
+        </Card>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" color={theme.colors.primary} style={styles.centered} />;
@@ -112,6 +128,11 @@ const styles = StyleSheet.create({
   serviceName: {
     ...theme.typography.body1,
     color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  phoneNumber: {
+    ...theme.typography.body2,
+    color: theme.colors.textSecondary,
     marginBottom: theme.spacing.sm,
   },
   date: {

@@ -2,7 +2,6 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../hooks/useAuth';
-import { useUserRole } from '../hooks/useUserRole';
 import AuthNavigator from './AuthNavigator';
 import CustomerNavigator from './CustomerNavigator';
 import PhotographerNavigator from './PhotographerNavigator';
@@ -13,10 +12,9 @@ import RoleSelectScreen from '../screens/auth/RoleSelectScreen';
 const Stack = createStackNavigator();
 
 const RootNavigator = () => {
-  const { user, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading } = useUserRole();
+  const { user, userProfile, loading } = useAuth();
 
-  if (authLoading || roleLoading) {
+  if (loading) {
     return <SplashScreen />;
   }
 
@@ -24,18 +22,17 @@ const RootNavigator = () => {
     <NavigationContainer>
       {!user ? (
         <AuthNavigator />
-      ) : !role ? (
+      ) : !userProfile ? (
         <Stack.Navigator>
           <Stack.Screen
             name="RoleSelect"
             component={RoleSelectScreen}
-            initialParams={{ userId: user.uid }}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>
-      ) : role === USER_ROLES.CUSTOMER ? (
+      ) : userProfile.role === USER_ROLES.CUSTOMER ? (
         <CustomerNavigator />
-      ) : role === USER_ROLES.PHOTOGRAPHER ? (
+      ) : userProfile.role === USER_ROLES.PHOTOGRAPHER ? (
         <PhotographerNavigator />
       ) : (
         <AuthNavigator /> // Fallback

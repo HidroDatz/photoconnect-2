@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
+import { ScrollView, Text, StyleSheet, Alert, Platform, ActivityIndicator, View } from 'react-native';
 import { createBooking } from '../../services/bookingService';
 import { getUserProfile } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
@@ -14,25 +14,44 @@ const CreateBookingScreen = ({ route }) => {
   const { photographerId } = route.params;
   const { user, userProfile } = useAuth();
   const navigation = useNavigation();
-
   const [photographer, setPhotographer] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(Platform.OS === 'ios');
   const [details, setDetails] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
-    getUserProfile(photographerId).then((doc) => {
-      if (doc.exists()) {
-        setPhotographer(doc.data());
-      }
-    });
-  }, [photographerId]);
+    if (photographerId) {
+      getUserProfile(photographerId)
+        .then((doc) => {
+          if (doc.exists()) {
+            setPhotographer(doc.data());
+          } else {
+            Alert.alert('Error', 'Photographer not found.');
+            navigation.goBack();
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to fetch photographer:', error);
+          Alert.alert('Error', 'Could not load photographer details.');
+          navigation.goBack();
+        })
+        .finally(() => {
+          setPageLoading(false);
+        });
+    }
+  }, [photographerId, navigation]);
 
   const handleBooking = async () => {
     if (!date) {
       Alert.alert('Missing Information', 'Please select a date.');
+      return;
+    }
+
+    if (!user || !photographer) {
+      Alert.alert('Error', 'User or photographer data is not loaded yet.');
       return;
     }
 
@@ -41,9 +60,10 @@ const CreateBookingScreen = ({ route }) => {
       await createBooking({
         userId: user.uid,
         customerName: userProfile.name,
+        customerPhone: userProfile.phoneNumber,
         photographerId,
         photographerName: photographer.name,
-        service: selectedService, // Can be null
+        service: selectedService,
         date: date.toISOString(),
         details,
         status: 'pending',
@@ -66,8 +86,16 @@ const CreateBookingScreen = ({ route }) => {
     setDate(currentDate);
   };
 
+  if (pageLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Book {photographer?.name}</Text>
 
       {photographer?.services && photographer.services.length > 0 && (
@@ -80,7 +108,7 @@ const CreateBookingScreen = ({ route }) => {
           >
             <Picker.Item label="No specific service" value={null} />
             {photographer.services.map((service, index) => (
-              <Picker.Item key={index} label={`${service.name} - $${service.price}`} value={service} />
+              <Picker.Item key={index} label={`${service.name} - ${service.price}`} value={service} />
             ))}
           </Picker>
         </View>
@@ -111,14 +139,26 @@ const CreateBookingScreen = ({ route }) => {
         style={styles.input}
       />
 
-      <Button title="Request Booking" onPress={handleBooking} loading={loading} style={styles.bookButton} />
-    </View>
+      <Button
+        title="Request Booking"
+        onPress={handleBooking}
+        loading={loading}
+        disabled={!photographer || !user}
+        style={styles.bookButton}
+      />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  centered: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+  },
+  container: {
+    flexGrow: 1,
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.background,
   },
@@ -146,8 +186,9 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   bookButton: {
-    marginTop: 'auto',
+    marginTop: theme.spacing.lg,
   },
 });
 
 export default CreateBookingScreen;
+

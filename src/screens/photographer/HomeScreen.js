@@ -59,6 +59,8 @@ const HomeScreen = () => {
         <Text style={getStatusStyle(item.status)}>{item.status.toUpperCase()}</Text>
       </View>
       <Text style={styles.serviceName}>{item.service?.name || 'Custom Request'}</Text>
+      
+      <Text style={styles.customerName}>{item.customerPhone || 'Customer'}</Text>
       <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
       {item.details ? <Text style={styles.details}>{item.details}</Text> : null}
       

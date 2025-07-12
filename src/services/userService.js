@@ -24,11 +24,12 @@ export const updateUserProfile = (userId, data) => {
 };
 
 export const searchPhotographers = (queryText, callback) => {
+  const lowercasedQuery = queryText.toLowerCase();
   const q = query(
     usersCollection,
     where('role', '==', 'photographer'),
-    where('name', '>=', queryText),
-    where('name', '<=', queryText + '\uf8ff')
+    where('name_lowercase', '>=', lowercasedQuery),
+    where('name_lowercase', '<=', lowercasedQuery + '\uf8ff')
   );
 
   return onSnapshot(q, (snapshot) => {

@@ -54,6 +54,7 @@ const PhotographerProfileScreen = ({ route, navigation }) => {
         <Avatar uri={photographer.avatarUrl} size={120} />
         <Text style={styles.name}>{photographer.name}</Text>
         <Text style={styles.location}>{photographer.location || 'Location not set'}</Text>
+        <Text style={styles.phoneNumber}>{photographer.phoneNumber}</Text>
         <Text style={styles.bio}>{photographer.bio}</Text>
       </View>
       {photographer.services?.length > 0 && (
@@ -135,6 +136,11 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   location: {
+    ...theme.typography.body1,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
+  },
+  phoneNumber: {
     ...theme.typography.body1,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.xs,

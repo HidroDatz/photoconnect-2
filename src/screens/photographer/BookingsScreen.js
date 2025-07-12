@@ -46,6 +46,7 @@ const BookingsScreen = () => {
           <Text style={getStatusStyle(item.status)}>{item.status.toUpperCase()}</Text>
         </View>
         <Text style={styles.serviceName}>{item.service?.name || 'Custom Request'}</Text>
+        <Text style={styles.phoneNumber}>{item.customerPhone}</Text>
         <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
       </Card>
     </TouchableOpacity>
@@ -112,6 +113,11 @@ const styles = StyleSheet.create({
   serviceName: {
     ...theme.typography.body1,
     color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  phoneNumber: {
+    ...theme.typography.body2,
+    color: theme.colors.textSecondary,
     marginBottom: theme.spacing.sm,
   },
   date: {

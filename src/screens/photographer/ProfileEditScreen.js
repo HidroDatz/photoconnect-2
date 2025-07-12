@@ -32,6 +32,12 @@ const ProfileEditScreen = () => {
   }, [user]);
 
   const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaType.Images,
       allowsEditing: true,
@@ -56,7 +62,13 @@ const ProfileEditScreen = () => {
         setUploading(false);
       }
 
-      await updateUserProfile(user.uid, { ...profile, avatarUrl: newAvatarUrl });
+      const updatedProfile = {
+        ...profile,
+        avatarUrl: newAvatarUrl,
+        name_lowercase: profile.name.toLowerCase(),
+      };
+
+      await updateUserProfile(user.uid, updatedProfile);
       Alert.alert('Profile Updated', 'Your profile has been successfully updated.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -77,7 +89,7 @@ const ProfileEditScreen = () => {
       <Text style={styles.title}>Edit Profile</Text>
       <View style={styles.avatarSection}>
         <Avatar uri={avatarUri} size={120} />
-        <Button title="Change Avatar" onPress={handlePickAvatar} style={styles.avatarButton} />
+        <Button title={avatarUri ? "Change Avatar" : "Add Avatar"} onPress={handlePickAvatar} style={styles.avatarButton} />
         {uploading && <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: theme.spacing.sm }} />}
       </View>
 

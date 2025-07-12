@@ -10,11 +10,12 @@ import { useAuth } from '../../hooks/useAuth';
 const RoleSelectScreen = () => {
   const { user } = useAuth();
   const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSelectRole = async (role) => {
-    if (!name) {
-      Alert.alert('Name Required', 'Please enter your name.');
+    if (!name || !phoneNumber) {
+      Alert.alert('Missing Fields', 'Please enter your name and phone number.');
       return;
     }
     if (!user || !user.uid || !user.email) {
@@ -23,9 +24,11 @@ const RoleSelectScreen = () => {
     }
     setLoading(true);
     try {
-      await createUserProfile(user.uid, { 
-        email: user.email, 
-        name, 
+      await createUserProfile(user.uid, {
+        email: user.email,
+        name,
+        name_lowercase: name.toLowerCase(),
+        phoneNumber,
         role,
         createdAt: new Date().toISOString(),
       });
@@ -42,25 +45,32 @@ const RoleSelectScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>One Last Step</Text>
       <Text style={styles.subtitle}>What should we call you, and what is your role?</Text>
-      
+
       <Input
         label="Your Name"
         placeholder="John Doe"
         value={name}
         onChangeText={setName}
       />
+      <Input
+        label="Phone Number"
+        placeholder="e.g., 123-456-7890"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+      />
 
       <View style={styles.buttonContainer}>
         <Text style={styles.roleTitle}>I am a...</Text>
-        <Button 
-          title="Customer" 
-          onPress={() => handleSelectRole(USER_ROLES.CUSTOMER)} 
+        <Button
+          title="Customer"
+          onPress={() => handleSelectRole(USER_ROLES.CUSTOMER)}
           loading={loading}
           style={styles.button}
         />
-        <Button 
-          title="Photographer" 
-          onPress={() => handleSelectRole(USER_ROLES.PHOTOGRAPHER)} 
+        <Button
+          title="Photographer"
+          onPress={() => handleSelectRole(USER_ROLES.PHOTOGRAPHER)}
           loading={loading}
           style={styles.button}
         />
