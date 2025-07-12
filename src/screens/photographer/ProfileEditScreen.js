@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
-import { getUserProfile, updateUserProfile } from '../../services/userService';
+import { getUserProfile, updateUserProfile, onUserProfileChange } from '../../services/userService';
 import { uploadImage, getDownloadURL } from '../../services/storageService';
 import * as ImagePicker from 'expo-image-picker';
 import { theme } from '../../theme/theme';
@@ -11,6 +12,7 @@ import Avatar from '../../components/shared/Avatar';
 
 const ProfileEditScreen = () => {
   const { user } = useAuth();
+  const navigation = useNavigation();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -18,19 +20,20 @@ const ProfileEditScreen = () => {
 
   useEffect(() => {
     if (user) {
-      getUserProfile(user.uid).then((doc) => {
+      const unsubscribe = onUserProfileChange(user.uid, (doc) => {
         if (doc.exists()) {
           const data = doc.data();
           setProfile(data);
           setAvatarUri(data.avatarUrl);
         }
       });
+      return () => unsubscribe();
     }
   }, [user]);
 
   const handlePickAvatar = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -54,7 +57,9 @@ const ProfileEditScreen = () => {
       }
 
       await updateUserProfile(user.uid, { ...profile, avatarUrl: newAvatarUrl });
-      Alert.alert('Profile Updated', 'Your profile has been successfully updated.');
+      Alert.alert('Profile Updated', 'Your profile has been successfully updated.', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile.');
       console.error(error);
